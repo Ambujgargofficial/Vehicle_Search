@@ -174,12 +174,13 @@
             
             if (!number) return <span>No Contact</span>;
 
-            const handleToggle = (e) => {
-                e.stopPropagation(); // Stop card click
-                if (isVisible) return; 
-
-                // Request verification from parent App
-                onVerifyRequest(() => setIsVisible(true));
+            // Updated Handler: Now triggers on container click if not visible
+            const handleContainerClick = (e) => {
+                e.stopPropagation(); // Always stop card popup from opening
+                if (!isVisible) {
+                    // Request verification from parent App
+                    onVerifyRequest(() => setIsVisible(true));
+                }
             };
 
             const strNum = String(number);
@@ -187,14 +188,17 @@
             const masked = "******" + last4;
 
             return (
-                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <div 
+                    className={`flex items-center gap-2 ${!isVisible ? 'cursor-pointer' : ''}`}
+                    onClick={handleContainerClick} // Click anywhere on this div works
+                >
                     <span className="font-medium font-mono text-gray-700">
                         {isVisible ? strNum : masked}
                     </span>
                     {!isVisible && (
                         <button 
-                            onClick={handleToggle}
-                            className="p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors focus:outline-none active:scale-95"
+                            type="button"
+                            className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors focus:outline-none active:scale-95"
                             title="View Full Number"
                         >
                             <Icons.Eye className="w-4 h-4" />
