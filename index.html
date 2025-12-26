@@ -476,6 +476,14 @@
                                         {formatDate(item["Invoice Date"])}
                                     </div>
                                 </div>
+
+                                {/* ADDED: Hypothecation - Only show if value exists */}
+                                {item["Hypothecation"] && (
+                                    <div className="mt-1 text-xs text-gray-600">
+                                        <span className="font-semibold">Hypothecation: </span>
+                                        {item["Hypothecation"]}
+                                    </div>
+                                )}
                             </div>
 
                         </div>
@@ -532,6 +540,11 @@
                             
                             <DetailRow label="Inv No." value={selectedRecord["Invoice #"]} />
                             <DetailRow label="Inv Date" value={formatDate(selectedRecord["Invoice Date"])} />
+                            
+                            {/* Only show Hypothecation row if value exists */}
+                            {selectedRecord["Hypothecation"] && (
+                                <DetailRow label="Hypothecation" value={selectedRecord["Hypothecation"]} />
+                            )}
                         </div>
 
                         {/* Technical Details (Essential Only) */}
