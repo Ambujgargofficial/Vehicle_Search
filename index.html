@@ -3,20 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vehicle Search App</title>
+    <title>Gaadi Search App</title>
     
+    <!-- GLOBAL SYSTEM ERROR TRAP (System crash pakadne ke liye) -->
+    <script>
+        window.addEventListener('error', function(event) {
+            document.body.innerHTML = `
+                <div style="background-color: #fee2e2; color: #991b1b; padding: 30px; font-family: sans-serif; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 999999; overflow-y: auto;">
+                    <h1 style="font-size: 24px; font-weight: bold; border-bottom: 2px solid #f87171; padding-bottom: 10px;">Bada System Crash Hua Hai</h1>
+                    <p style="margin-top: 20px;"><strong>Error Message:</strong> ${event.message}</p>
+                    <p><strong>Location:</strong> ${event.filename} (Line ${event.lineno})</p>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5; margin-top: 15px; font-family: monospace; white-space: pre-wrap; font-size: 14px; overflow-x: auto;">${event.error && event.error.stack ? event.error.stack : 'Stack trace nahi mila.'}</div>
+                    <p style="margin-top: 20px; font-size: 14px; font-weight: bold;">Kripya is page ka screenshot lein.</p>
+                </div>
+            `;
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            document.body.innerHTML = `
+                <div style="background-color: #fee2e2; color: #991b1b; padding: 30px; font-family: sans-serif; height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: 999999; overflow-y: auto;">
+                    <h1 style="font-size: 24px; font-weight: bold; border-bottom: 2px solid #f87171; padding-bottom: 10px;">Data Promise Crash</h1>
+                    <p style="margin-top: 20px;"><strong>Karan (Reason):</strong> ${event.reason}</p>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5; margin-top: 15px; font-family: monospace; white-space: pre-wrap; font-size: 14px; overflow-x: auto;">${event.reason && event.reason.stack ? event.reason.stack : 'Stack trace nahi mila.'}</div>
+                    <p style="margin-top: 20px; font-size: 14px; font-weight: bold;">Kripya is page ka screenshot lein.</p>
+                </div>
+            `;
+        });
+    </script>
+
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel for JSX (FIXED VERSION TO PREVENT MODULE ERROR) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* Custom scrollbar for better mobile look */
+        /* Mobile ke liye custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -33,24 +59,61 @@
 
     <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <!-- PRESETS="REACT" ADDED HERE -->
+    <script type="text/babel" data-presets="react">
+        const { useState, useEffect, useRef, Component } = React;
 
-        // --- ICON COMPONENTS ---
+        // --- ERROR BOUNDARY COMPONENT (UI Crash pakadne ke liye) ---
+        class ErrorBoundary extends Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null, errorInfo: null };
+            }
+
+            static getDerivedStateFromError(error) {
+                return { hasError: true };
+            }
+
+            componentDidCatch(error, errorInfo) {
+                this.setState({ error: error, errorInfo: errorInfo });
+                console.error("ErrorBoundary ne error pakda:", error, errorInfo);
+            }
+
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="min-h-screen bg-red-50 p-6 flex flex-col items-center justify-center font-sans">
+                            <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-3xl border border-red-200">
+                                <div className="flex items-center gap-3 mb-4 text-red-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    <h1 className="text-2xl font-bold">React UI Crash Ho Gaya!</h1>
+                                </div>
+                                <p className="text-gray-700 mb-6">Naye data ko render karte waqt application mein error aayi hai. Kripya screenshot lein.</p>
+                                
+                                <div className="bg-red-50 p-4 rounded-lg overflow-x-auto mb-4 border border-red-100">
+                                    <h2 className="font-bold text-red-800 mb-2">Error Message:</h2>
+                                    <code className="text-red-600 font-mono text-sm">{this.state.error && this.state.error.toString()}</code>
+                                </div>
+
+                                <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto border border-gray-200">
+                                    <h2 className="font-bold text-gray-800 mb-2">Component Stack:</h2>
+                                    <pre className="text-gray-600 font-mono text-xs whitespace-pre-wrap">{this.state.errorInfo && this.state.errorInfo.componentStack}</pre>
+                                </div>
+
+                                <button onClick={() => window.location.reload()} className="mt-6 w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors">
+                                    App Phir Se Reload Karein
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        // --- ICON COMPONENTS (Icons banaye gaye) ---
         const Icon = ({ path, className }) => (
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="24" height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                className={className}
-            >
-                {path}
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>
         );
 
         const Icons = {
@@ -68,29 +131,33 @@
             RefreshCw: (props) => <Icon {...props} path={<><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></>} />,
             FileText: (props) => <Icon {...props} path={<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>} />,
             Eye: (props) => <Icon {...props} path={<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></>} />,
-            Lock: (props) => <Icon {...props} path={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></>} />
+            Lock: (props) => <Icon {...props} path={<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></>} />,
+            AlertTriangle: (props) => <Icon {...props} path={<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></>} />
         };
 
-        // --- CONFIGURATION ---
+        // --- CONFIGURATION (Aapka API Link) ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrzlUzL-IxA2bBeuieL8KhfDatDCIqZ4tYSEosRyhny_zbneB5bqqjPfmOmIkw1B0lYw/exec"; 
 
-        // --- HELPER: SAFE DATE FORMATTER ---
+        // --- HELPER: SAFE DATE FORMATTER (Date ko theek format mein dikhana) ---
         const formatDate = (dateString) => {
             if (!dateString) return "N/A";
-            const date = new Date(dateString);
-            if (!isNaN(date.getTime())) {
-                return date.toLocaleDateString('en-GB');
+            try {
+                const date = new Date(dateString);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-GB');
+                }
+                return String(dateString);
+            } catch (e) {
+                return String(dateString);
             }
-            return String(dateString);
         };
 
-        // --- COMPONENT: PIN MODAL ---
+        // --- COMPONENT: PIN MODAL (Number dekhne ke liye Password box) ---
         const PinModal = ({ isOpen, onClose, onSuccess }) => {
             const [pin, setPin] = useState('');
             const [error, setError] = useState(false);
             const inputRef = useRef(null);
 
-            // Auto focus when opened
             useEffect(() => {
                 if (isOpen && inputRef.current) {
                     setTimeout(() => inputRef.current.focus(), 100);
@@ -125,7 +192,7 @@
                         </div>
 
                         <h3 className="text-xl font-bold text-center text-gray-800 mb-1">Security Check</h3>
-                        <p className="text-gray-500 text-center text-sm mb-5">Enter PIN to reveal number</p>
+                        <p className="text-gray-500 text-center text-sm mb-5">Number dekhne ke liye PIN dalein</p>
                         
                         <form onSubmit={handleSubmit}>
                             <input 
@@ -144,23 +211,12 @@
                             />
                             
                             <div className="h-6 mb-2">
-                                {error && <p className="text-red-500 text-xs font-semibold text-center animate-pulse">Incorrect PIN. Try again.</p>}
+                                {error && <p className="text-red-500 text-xs font-semibold text-center animate-pulse">Galat PIN. Phir se try karein.</p>}
                             </div>
                             
                             <div className="flex gap-3">
-                                <button 
-                                    type="button"
-                                    onClick={handleClose}
-                                    className="flex-1 py-3 text-gray-600 font-medium bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="submit"
-                                    className="flex-1 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
-                                >
-                                    Unlock
-                                </button>
+                                <button type="button" onClick={handleClose} className="flex-1 py-3 text-gray-600 font-medium bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Radd Karein</button>
+                                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">Kholein</button>
                             </div>
                         </form>
                      </div>
@@ -168,17 +224,15 @@
             );
         };
 
-        // --- COMPONENT: MASKED PHONE NUMBER ---
+        // --- COMPONENT: MASKED PHONE NUMBER (Chhupa hua number) ---
         const MaskedPhone = ({ number, onVerifyRequest }) => {
             const [isVisible, setIsVisible] = useState(false);
             
-            if (!number) return <span>No Contact</span>;
+            if (!number) return <span>Contact nahi hai</span>;
 
-            // Updated Handler: Now triggers on container click if not visible
             const handleContainerClick = (e) => {
-                e.stopPropagation(); // Always stop card popup from opening
+                e.stopPropagation(); 
                 if (!isVisible) {
-                    // Request verification from parent App
                     onVerifyRequest(() => setIsVisible(true));
                 }
             };
@@ -188,19 +242,10 @@
             const masked = "******" + last4;
 
             return (
-                <div 
-                    className={`flex items-center gap-2 ${!isVisible ? 'cursor-pointer' : ''}`}
-                    onClick={handleContainerClick} // Click anywhere on this div works
-                >
-                    <span className="font-medium font-mono text-gray-700">
-                        {isVisible ? strNum : masked}
-                    </span>
+                <div className={`flex items-center gap-2 ${!isVisible ? 'cursor-pointer' : ''}`} onClick={handleContainerClick}>
+                    <span className="font-medium font-mono text-gray-700">{isVisible ? strNum : masked}</span>
                     {!isVisible && (
-                        <button 
-                            type="button"
-                            className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors focus:outline-none active:scale-95"
-                            title="View Full Number"
-                        >
+                        <button type="button" className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors focus:outline-none active:scale-95" title="Poora Number Dekhein">
                             <Icons.Eye className="w-4 h-4" />
                         </button>
                     )}
@@ -208,7 +253,7 @@
             );
         };
 
-        // --- MAIN APP COMPONENT ---
+        // --- MAIN APP COMPONENT (Mukhya Application) ---
         const App = () => {
             const [searchTerm, setSearchTerm] = useState('');
             const [allData, setAllData] = useState([]);
@@ -218,11 +263,10 @@
             const [fetchError, setFetchError] = useState(null);
             const [isInitializing, setIsInitializing] = useState(true);
 
-            // --- PIN MODAL STATE ---
             const [isPinModalOpen, setIsPinModalOpen] = useState(false);
             const [pendingRevealCallback, setPendingRevealCallback] = useState(null);
 
-            // --- FETCH DATA ON LOAD ---
+            // --- FETCH DATA DEFENSIVELY (Data Surakshit Tarike Se Layein) ---
             useEffect(() => {
                 fetchSheetData();
             }, []);
@@ -234,48 +278,65 @@
                     const bustCache = `?t=${new Date().getTime()}`;
                     const response = await fetch(SCRIPT_URL + bustCache);
                     
-                    if (!response.ok) throw new Error("Failed to fetch data");
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status} - Google Script Fail Ho Gaya`);
                     
-                    const json = await response.json();
+                    // CRITICAL UPDATE: Text ki tarah padhein taki error page hone par crash na ho
+                    const textData = await response.text();
+                    
+                    let json;
+                    try {
+                        json = JSON.parse(textData);
+                    } catch (parseError) {
+                        console.error("JSON parse fail ho gaya. Data preview:", textData.substring(0, 150));
+                        throw new Error(`Data valid JSON nahi hai. Shayad data bahut bada hai isliye Google HTML error page bhej raha hai.`);
+                    }
                     
                     if (Array.isArray(json)) {
-                        setAllData(json);
-                        console.log(`Loaded ${json.length} records`);
+                        // Data sanitization (Kharab ya khali rows hatayein)
+                        const validData = json.filter(row => row && typeof row === 'object' && !Array.isArray(row));
+                        setAllData(validData);
+                        console.log(`Safaltapoorvak ${validData.length} records load kiye gaye`);
                     } else {
-                        throw new Error("Invalid data format received");
+                        throw new Error(`Data format galat hai: Array chahiye tha par ${typeof json} mila`);
                     }
                 } catch (err) {
-                    console.error("Error fetching data:", err);
-                    setFetchError("Could not load data. Check internet or Script permissions.");
+                    console.error("Data Fetching Error:", err);
+                    setFetchError(`Connection Error: ${err.message}`);
                 } finally {
                     setIsInitializing(false);
                 }
             };
 
-            // --- SEARCH LOGIC ---
+            // --- SEARCH LOGIC (Khojne Ka Tarika) ---
             const handleSearch = (e) => {
                 const term = e.target.value;
                 setSearchTerm(term);
+                setFetchError(null);
 
                 if (term.length > 2) {
                     setLoading(true);
                     setTimeout(() => {
-                        const lowerTerm = term.toLowerCase();
-                        const filtered = allData.filter(item => {
-                            // UPDATED: Using New Column Names
-                            const regNo = item["Permanent Reg No"] ? String(item["Permanent Reg No"]).toLowerCase() : "";
-                            
-                            // UPDATED NAME LOGIC: Check 'Customer First Name', if blank check 'Account'
-                            const nameVal = item["Customer First Name"] || item["Account"] || "";
-                            const name = String(nameVal).toLowerCase();
+                        try {
+                            const lowerTerm = term.toLowerCase();
+                            const filtered = allData.filter(item => {
+                                if (!item || typeof item !== 'object') return false;
 
-                            const phone = item["Mobile Phone #"] ? String(item["Mobile Phone #"]) : "";
-                            const frameNo = item["Frame #"] ? String(item["Frame #"]).toLowerCase() : "";
-                            
-                            return regNo.includes(lowerTerm) || name.includes(lowerTerm) || phone.includes(term) || frameNo.includes(lowerTerm);
-                        });
-                        setSearchResults(filtered);
-                        setLoading(false);
+                                const regNo = item["Permanent Reg No"] ? String(item["Permanent Reg No"]).toLowerCase() : "";
+                                const nameVal = item["Customer First Name"] || item["Account"] || "";
+                                const name = String(nameVal).toLowerCase();
+                                const phone = item["Mobile Phone #"] ? String(item["Mobile Phone #"]) : "";
+                                const frameNo = item["Frame #"] ? String(item["Frame #"]).toLowerCase() : "";
+                                
+                                return regNo.includes(lowerTerm) || name.includes(lowerTerm) || phone.includes(term) || frameNo.includes(lowerTerm);
+                            });
+                            setSearchResults(filtered);
+                        } catch (err) {
+                            console.error("Search Logic Error:", err);
+                            setFetchError(`Search Processing Error: ${err.message}`);
+                            setSearchResults([]);
+                        } finally {
+                            setLoading(false);
+                        }
                     }, 300);
                 } else {
                     setSearchResults([]);
@@ -286,60 +347,47 @@
             const clearSearch = () => {
                 setSearchTerm('');
                 setSearchResults([]);
+                setFetchError(null);
             };
 
-            // --- PIN LOGIC ---
             const requestPinVerification = (onSuccessCallback) => {
                 setPendingRevealCallback(() => onSuccessCallback); 
                 setIsPinModalOpen(true);
             };
 
             const handlePinSuccess = () => {
-                if (pendingRevealCallback) {
-                    pendingRevealCallback();
-                }
+                if (pendingRevealCallback) pendingRevealCallback();
                 setPendingRevealCallback(null);
             };
 
-            // --- RENDER ---
+            // --- RENDER (Dikhane Ka Code) ---
             return (
                 <div className="min-h-screen bg-gray-50 font-sans pb-10">
                 
-                {/* GLOBAL PIN MODAL */}
-                <PinModal 
-                    isOpen={isPinModalOpen} 
-                    onClose={() => setIsPinModalOpen(false)} 
-                    onSuccess={handlePinSuccess}
-                />
+                <PinModal isOpen={isPinModalOpen} onClose={() => setIsPinModalOpen(false)} onSuccess={handlePinSuccess} />
 
                 {/* HEADER */}
                 <div className="bg-blue-700 p-6 pb-12 rounded-b-3xl shadow-lg relative z-10">
                     <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-white text-2xl font-bold tracking-tight">Vehicle Search</h1>
-                    <div className="bg-white/20 p-2 rounded-full">
-                        <Icons.User className="text-white w-6 h-6" />
-                    </div>
+                    <h1 className="text-white text-2xl font-bold tracking-tight">Gaadi Search</h1>
+                    <div className="bg-white/20 p-2 rounded-full"><Icons.User className="text-white w-6 h-6" /></div>
                     </div>
                     
-                    <p className="text-blue-100 text-sm mb-2">Find details by Reg No, Name, Mobile or Frame #</p>
+                    <p className="text-blue-100 text-sm mb-2">Reg No, Naam, Mobile ya Frame # se details dhundhein</p>
                     
-                    {/* SEARCH BAR */}
                     <div className="relative">
                     <input
                         type="text"
-                        placeholder="Search (Reg No, Name, Mobile, Frame #)"
+                        placeholder="Search Karein (Reg No, Naam, Mobile, Frame #)"
                         className="w-full pl-12 pr-10 py-4 rounded-xl shadow-xl text-gray-700 text-lg focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all placeholder-gray-400 disabled:bg-gray-100"
                         value={searchTerm}
                         onChange={handleSearch}
-                        disabled={isInitializing || !!fetchError}
+                        disabled={isInitializing || (!!fetchError && allData.length === 0)}
                     />
                     <Icons.Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
                     {searchTerm && (
-                        <button 
-                        onClick={clearSearch}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                        <Icons.X className="w-5 h-5" />
+                        <button onClick={clearSearch} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <Icons.X className="w-5 h-5" />
                         </button>
                     )}
                     </div>
@@ -348,67 +396,59 @@
                 {/* CONTENT AREA */}
                 <div className="px-4 -mt-6 relative z-20">
                     
-                    {/* Initialization / Error States */}
                     {isInitializing && (
                     <div className="bg-white p-6 rounded-xl shadow-md text-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                        <p className="text-gray-500 text-sm">Connecting to Database...</p>
+                        <p className="text-gray-500 text-sm">Database securely download ho raha hai...</p>
                     </div>
                     )}
 
                     {fetchError && (
-                    <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-100 text-center">
-                        <Icons.AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                        <p className="text-red-700 font-medium mb-2">Connection Status</p>
-                        <p className="text-red-600 text-xs mb-4">{fetchError}</p>
-                        <button 
-                        onClick={fetchSheetData}
-                        className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center mx-auto hover:bg-red-200"
-                        >
-                        <Icons.RefreshCw className="w-4 h-4 mr-2" /> Retry
-                        </button>
+                    <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-200 text-center mb-4">
+                        <Icons.AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                        <p className="text-red-700 font-bold mb-2">Dhyan Dein</p>
+                        <p className="text-red-600 text-sm mb-4 bg-white p-2 rounded border border-red-100 overflow-hidden text-ellipsis">{fetchError}</p>
+                        
+                        {allData.length === 0 ? (
+                            <button onClick={fetchSheetData} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center mx-auto hover:bg-red-700 transition-colors">
+                            <Icons.RefreshCw className="w-4 h-4 mr-2" /> Connection Phir Se Try Karein
+                            </button>
+                        ) : (
+                            <button onClick={() => setFetchError(null)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center mx-auto hover:bg-gray-300 transition-colors">
+                            Error Hatayein
+                            </button>
+                        )}
                     </div>
                     )}
 
-                    {/* Searching State */}
-                    {loading && !isInitializing && (
+                    {loading && !isInitializing && !fetchError && (
                     <div className="bg-white p-6 rounded-xl shadow-md text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                        <p className="text-gray-500 text-sm">Searching records...</p>
+                        <p className="text-gray-500 text-sm">Records dhoondh raha hai...</p>
                     </div>
                     )}
 
-                    {/* Empty State / Intro */}
                     {!loading && !isInitializing && !fetchError && searchTerm.length < 3 && (
                     <div className="mt-8 text-center text-gray-400">
-                        {/* Using Car Icon directly */}
-                        <div className="mx-auto mb-4 w-16 h-16 text-gray-300 flex items-center justify-center">
-                            <Icons.Car className="w-16 h-16" />
-                        </div>
-                        <p className="text-lg font-medium text-gray-500">Ready to Search</p>
+                        <div className="mx-auto mb-4 w-16 h-16 text-gray-300 flex items-center justify-center"><Icons.Car className="w-16 h-16" /></div>
+                        <p className="text-lg font-medium text-gray-500">Search Ke Liye Taiyar</p>
                         <p className="text-xs mt-2 text-gray-400">
-                        {allData.length > 0 ? `Database loaded: ${allData.length} records` : "Database is empty"}
+                        {allData.length > 0 ? `Database loaded: ${allData.length} records maujood hain` : "Database khali hai"}
                         </p>
                     </div>
                     )}
 
-                    {/* No Results */}
-                    {!loading && searchTerm.length >= 3 && searchResults.length === 0 && (
+                    {!loading && !fetchError && searchTerm.length >= 3 && searchResults.length === 0 && (
                     <div className="bg-white p-8 rounded-xl shadow-sm text-center mt-2">
-                        <p className="text-gray-600 font-medium">No records found</p>
-                        <p className="text-gray-400 text-sm mt-1">Try a different Registration No, Name, or Frame #</p>
+                        <p className="text-gray-600 font-medium">Koi record nahi mila</p>
+                        <p className="text-gray-400 text-sm mt-1">Doosra Registration No, Naam, ya Frame # try karein</p>
                     </div>
                     )}
 
                     {/* RESULTS LIST */}
                     <div className="space-y-4">
                     {searchResults.map((item, index) => (
-                        <div 
-                        key={index}
-                        onClick={() => setSelectedRecord(item)}
-                        className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-transform duration-100 cursor-pointer hover:shadow-md"
-                        >
-                        {/* Card Header: Reg No (Updated Key) */}
+                        <div key={`result-${index}`} onClick={() => setSelectedRecord(item)} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-transform duration-100 cursor-pointer hover:shadow-md">
                         <div className="flex justify-between items-start mb-3">
                             <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-lg text-sm font-bold tracking-wide border border-yellow-200">
                             {item["Permanent Reg No"] || "N/A"}
@@ -416,142 +456,68 @@
                             <Icons.ChevronRight className="text-gray-300 w-5 h-5" />
                         </div>
 
-                        {/* Card Body: Name & Phone (Updated Keys with Account Fallback) */}
                         <div className="space-y-2">
                             <div className="flex items-center text-gray-700">
-                            <Icons.User className="w-4 h-4 mr-3 text-blue-500" />
-                            <span className="font-semibold text-lg">
+                            <Icons.User className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
+                            <span className="font-semibold text-lg truncate">
                                 {item["Customer First Name"] || item["Account"] || "Unknown Name"}
                             </span>
                             </div>
                             <div className="flex items-center text-gray-500">
-                            <Icons.Phone className="w-4 h-4 mr-3 text-green-500" />
-                            {/* NEW: Masked Phone Component with Verification Request */}
-                            <MaskedPhone 
-                                number={item["Mobile Phone #"]} 
-                                onVerifyRequest={requestPinVerification}
-                            />
+                            <Icons.Phone className="w-4 h-4 mr-3 text-green-500 flex-shrink-0" />
+                            <MaskedPhone number={item["Mobile Phone #"]} onVerifyRequest={requestPinVerification} />
                             </div>
                             
-                            {/* UPDATED FOOTER: Added Model Variant & Color & Invoice Details (Updated Keys) */}
                             <div className="text-gray-500 text-xs pt-2 border-t mt-3 space-y-2">
-                                {/* Model, Variant, Color separated into lines with labels */}
                                 <div className="flex flex-col gap-1">
-                                    <div>
-                                        <span className="font-medium text-gray-500">Model Name : </span>
-                                        <span className="font-bold text-gray-700 uppercase tracking-wide">
-                                            {item["Model Name"] || "N/A"}
-                                        </span>
-                                    </div>
-                                    {item["Model Variant"] && (
-                                        <div>
-                                            <span className="font-medium text-gray-500">Model Variant : </span>
-                                            <span className="font-medium text-gray-600 uppercase tracking-wide">
-                                                {item["Model Variant"]}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {item["Color"] && (
-                                        <div>
-                                            <span className="font-medium text-gray-500">Color : </span>
-                                            <span className="font-medium text-gray-500 uppercase tracking-wide">
-                                                {item["Color"]}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <div><span className="font-medium text-gray-500">Model Name : </span><span className="font-bold text-gray-700 uppercase tracking-wide">{item["Model Name"] || "N/A"}</span></div>
+                                    {item["Model Variant"] && (<div><span className="font-medium text-gray-500">Model Variant : </span><span className="font-medium text-gray-600 uppercase tracking-wide">{item["Model Variant"]}</span></div>)}
+                                    {item["Color"] && (<div><span className="font-medium text-gray-500">Color : </span><span className="font-medium text-gray-500 uppercase tracking-wide">{item["Color"]}</span></div>)}
                                 </div>
-                                
-                                <div className="uppercase tracking-wider pt-1 border-t border-gray-100 mt-1">
-                                    Frame: {item["Frame #"] || "N/A"}
-                                </div>
-                                
-                                {/* New Line for Invoice No and Date */}
+                                <div className="uppercase tracking-wider pt-1 border-t border-gray-100 mt-1">Frame: {item["Frame #"] || "N/A"}</div>
                                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                                    <div className="flex items-center bg-gray-100 px-2 py-0.5 rounded text-gray-600">
-                                        <Icons.FileText className="w-3 h-3 mr-1" />
-                                        Inv: {item["Invoice #"] || "N/A"}
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Icons.Calendar className="w-3 h-3 mr-1 text-gray-400" />
-                                        {formatDate(item["Invoice Date"])}
-                                    </div>
+                                    <div className="flex items-center bg-gray-100 px-2 py-0.5 rounded text-gray-600"><Icons.FileText className="w-3 h-3 mr-1" /> Inv: {item["Invoice #"] || "N/A"}</div>
+                                    <div className="flex items-center"><Icons.Calendar className="w-3 h-3 mr-1 text-gray-400" /> {formatDate(item["Invoice Date"])}</div>
                                 </div>
-
-                                {/* ADDED: Hypothecation - Only show if value exists */}
-                                {item["Hypothecation"] && (
-                                    <div className="mt-1 text-xs text-gray-600">
-                                        <span className="font-semibold">Hypothecation: </span>
-                                        {item["Hypothecation"]}
-                                    </div>
-                                )}
+                                {item["Hypothecation"] && (<div className="mt-1 text-xs text-gray-600"><span className="font-semibold">Hypothecation: </span>{item["Hypothecation"]}</div>)}
                             </div>
-
                         </div>
                         </div>
                     ))}
                     </div>
                 </div>
 
-                {/* DETAILS MODAL (Compact Version) */}
+                {/* DETAILS MODAL */}
                 {selectedRecord && (
                     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
                     <div className="bg-white w-full max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-200">
-                        
-                        {/* Modal Header (Updated Key) */}
                         <div className="flex justify-between items-center p-5 border-b bg-gray-50 rounded-t-3xl sm:rounded-t-2xl">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800">Vehicle Details</h2>
+                            <h2 className="text-xl font-bold text-gray-800">Gaadi Ki Details</h2>
                             <p className="text-xs text-gray-500">{selectedRecord["Permanent Reg No"]}</p>
                         </div>
-                        <button 
-                            onClick={() => setSelectedRecord(null)}
-                            className="bg-gray-200 p-2 rounded-full hover:bg-gray-300 transition-colors"
-                        >
-                            <Icons.X className="w-5 h-5 text-gray-600" />
-                        </button>
+                        <button onClick={() => setSelectedRecord(null)} className="bg-gray-200 p-2 rounded-full hover:bg-gray-300 transition-colors"><Icons.X className="w-5 h-5 text-gray-600" /></button>
                         </div>
 
-                        {/* Modal Content (Compact) - UPDATED KEYS & ACCOUNT FALLBACK */}
                         <div className="p-5 overflow-y-auto max-h-[70vh] space-y-5">
-                        
-                        {/* Primary Info Block */}
                         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                             <div className="text-center mb-4">
-                            <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                <Icons.Car className="text-blue-600 w-7 h-7" />
+                            <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2"><Icons.Car className="text-blue-600 w-7 h-7" /></div>
+                            <h3 className="font-bold text-lg text-gray-800">{selectedRecord["Model Name"] || "N/A"}</h3>
+                            <p className="text-sm text-gray-500">{(selectedRecord["Model Variant"] || "N/A")} - {(selectedRecord["Color"] || "N/A")}</p>
                             </div>
-                            <h3 className="font-bold text-lg text-gray-800">{selectedRecord["Model Name"]}</h3>
-                            <p className="text-sm text-gray-500">{selectedRecord["Model Variant"]} - {selectedRecord["Color"]}</p>
+                            <DetailRow label="Grahak Ka Naam" value={selectedRecord["Customer First Name"] || selectedRecord["Account"]} />
+                            <div className="flex justify-between py-2 border-b border-blue-200/50 last:border-0">
+                                <span className="text-gray-500 text-sm font-medium">Sampark (Contact)</span>
+                                <div className="text-right"><MaskedPhone number={selectedRecord["Mobile Phone #"]} onVerifyRequest={requestPinVerification} /></div>
                             </div>
-                            
-                            {/* UPDATED: Fallback to Account if Name is blank */}
-                            <DetailRow label="Customer Name" value={selectedRecord["Customer First Name"] || selectedRecord["Account"]} />
-                            
-                            {/* Phone in Modal also masked for consistency */}
-                            <div className="flex justify-between py-2 border-b border-gray-100 last:border-0">
-                                <span className="text-gray-500 text-sm font-medium">Contact</span>
-                                <div className="text-right">
-                                    <MaskedPhone 
-                                        number={selectedRecord["Mobile Phone #"]} 
-                                        onVerifyRequest={requestPinVerification}
-                                    />
-                                </div>
-                            </div>
-                            
                             <DetailRow label="Inv No." value={selectedRecord["Invoice #"]} />
                             <DetailRow label="Inv Date" value={formatDate(selectedRecord["Invoice Date"])} />
-                            
-                            {/* Only show Hypothecation row if value exists */}
-                            {selectedRecord["Hypothecation"] && (
-                                <DetailRow label="Hypothecation" value={selectedRecord["Hypothecation"]} />
-                            )}
+                            {selectedRecord["Hypothecation"] && (<DetailRow label="Hypothecation" value={selectedRecord["Hypothecation"]} />)}
                         </div>
 
-                        {/* Technical Details (Essential Only) */}
                         <div>
-                            <h4 className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">
-                            <Icons.Hash className="w-4 h-4 mr-2" /> Identification
-                            </h4>
+                            <h4 className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-3"><Icons.Hash className="w-4 h-4 mr-2" /> Identification</h4>
                             <div className="bg-white border rounded-xl p-4 shadow-sm">
                             <DetailRow label="Registration No." value={selectedRecord["Permanent Reg No"]} />
                             <DetailRow label="Frame / Chassis No." value={selectedRecord["Frame #"]} />
@@ -559,23 +525,18 @@
                             </div>
                         </div>
 
-                        {/* Service Dates (Essential Only) */}
                         {selectedRecord["Next Service Date"] && (
                             <div>
-                                <h4 className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">
-                                <Icons.Calendar className="w-4 h-4 mr-2" /> Service Info
-                                </h4>
+                                <h4 className="flex items-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-3"><Icons.Calendar className="w-4 h-4 mr-2" /> Service Info</h4>
                                 <div className="bg-white border rounded-xl p-4 shadow-sm">
                                 <DetailRow label="Next Service" value={formatDate(selectedRecord["Next Service Date"])} />
                                 </div>
                             </div>
                         )}
-
                         </div>
                     </div>
                     </div>
                 )}
-
                 </div>
             );
         };
@@ -587,8 +548,13 @@
             </div>
         );
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(<ErrorBoundary><App /></ErrorBoundary>);
+        } else {
+            console.error("Critical error: Root element nahi mila.");
+        }
     </script>
 </body>
 </html>
